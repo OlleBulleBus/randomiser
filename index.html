@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#111216">
+<meta name="description" content="Settle it with a spin. A free, offline wheel for 1 to 20 choices.">
+<title>Randomiser — Leave it to the wheel</title>
+<style>
+:root{color-scheme:dark;--bg:#111216;--panel:#1b1c22;--line:#303139;--muted:#a1a2ae;--white:#f4f3ed;--lime:#d5fa63;--purple:#afa0f7}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--white);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.38}
+button:focus-visible,input:focus-visible{outline:3px solid var(--lime);outline-offset:4px}
+button{color:inherit}
+.shell{max-width:1260px;margin:auto;padding:30px 48px 22px}
+header{display:flex;align-items:center;justify-content:space-between;padding-bottom:26px;border-bottom:1px solid var(--line)}
+.brand{display:flex;gap:10px;align-items:center;font-size:19px;font-weight:800;letter-spacing:-.6px}
+.brand-icon{display:grid;place-items:center;background:var(--lime);color:var(--bg);width:30px;height:30px;border-radius:9px;font-size:23px}
+.header-note{color:var(--muted);font-size:12px;display:flex;align-items:center;gap:8px}
+.dot{width:6px;height:6px;background:var(--lime);border-radius:50%}
+.intro{margin:42px 0 30px}
+.eyebrow{color:var(--lime);text-transform:uppercase;font-size:11px;font-weight:750;letter-spacing:2px}
+h1{font-size:clamp(34px,5vw,58px);letter-spacing:-2.8px;line-height:1.08;margin:13px 0}
+h1 span{color:var(--purple)}
+.intro p{color:var(--muted);font-size:14px;line-height:1.7;margin:0}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:28px;align-items:start}
+.arena{position:relative;border:1px solid var(--line);border-radius:24px;padding:24px 28px 22px;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#29243c 0%,#1a1b22 58%,#17181d 100%);text-align:center}
+.arena-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.badge{border:1px solid #42434a;border-radius:30px;padding:7px 11px;font-size:10px;font-weight:650;letter-spacing:1px}
+.odds{font-size:11px;color:#b5b3c5}
+.wheel-wrap{position:relative;width:min(100%,410px);margin:27px auto 18px;aspect-ratio:1;filter:drop-shadow(0 15px 22px #0006)}
+.wheel-frame{position:absolute;inset:0;border:9px solid #383641;border-radius:50%;box-shadow:0 0 0 1px #64606f,inset 0 0 0 3px #111216;background:#282532;overflow:hidden}
+#wheel{width:100%;height:100%;display:block;will-change:transform}
+.pointer{position:absolute;left:50%;top:-9px;transform:translateX(-50%);width:30px;height:40px;z-index:2;filter:drop-shadow(0 3px 2px #0007)}
+.hub{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:64px;height:64px;background:#17181e;border:5px solid #f5f2e5;border-radius:50%;display:grid;place-items:center;box-shadow:0 2px 12px #0005;color:var(--lime);font-size:27px}
+.result{min-height:76px;display:flex;flex-direction:column;justify-content:center;gap:6px}
+.result-label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted)}
+#result{font-size:24px;font-weight:750;letter-spacing:-.7px;overflow-wrap:anywhere;line-height:1.25;margin:0}
+.spin{margin-top:15px;width:min(100%,360px);border:0;border-radius:12px;background:var(--lime);color:#1a2112;padding:16px 20px;font-weight:800;font-size:16px;box-shadow:0 4px 0 #8ea740;transition:filter .15s,transform .15s}
+.spin:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-2px)}
+.spin:active:not(:disabled){transform:translateY(2px);box-shadow:0 2px 0 #8ea740}
+.key-hint{font-size:11px;color:var(--muted);margin:14px 0 0}
+kbd{font-family:inherit;border:1px solid #45454e;border-radius:4px;padding:1px 5px;font-size:10px}
+.side{display:flex;flex-direction:column;gap:16px}
+.panel{border:1px solid var(--line);border-radius:20px;background:var(--panel);padding:23px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:7px}
+h2{font-size:17px;letter-spacing:-.5px;margin:0}
+.counter{font-size:11px;color:var(--muted);background:#26272f;border:1px solid #3a3b43;border-radius:6px;padding:4px 8px;font-variant-numeric:tabular-nums}
+.help{font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 18px}
+.presets{display:flex;gap:7px;margin-bottom:18px}
+.preset{border:1px solid #41414c;background:#24252c;padding:8px 10px;border-radius:7px;font-size:11px}
+.preset:hover:not(:disabled){background:#35343e}
+#options{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;padding:4px; margin:-4px;scrollbar-width:thin}
+.option{display:flex;align-items:center;gap:10px;padding:8px 9px;border:1px solid #3b3b45;border-radius:9px;background:#15161c}
+.swatch{width:9px;height:9px;flex:none;border-radius:50%}
+.option input{min-width:0;width:100%;border:0;background:transparent;color:var(--white);font-size:13px;padding:4px 0}
+.option input:focus-visible{outline:0;box-shadow:0 2px 0 var(--lime)}
+.option input:disabled{opacity:.6}
+.remove{width:28px;height:28px;flex:none;border:0;border-radius:5px;background:transparent;color:var(--muted);font-size:20px;line-height:1}
+.remove:hover:not(:disabled){background:#38292e;color:#ffa4a4}
+.add{width:100%;border:1px dashed #55545e;background:transparent;border-radius:9px;margin-top:12px;padding:11px;font-size:12px;font-weight:650}
+.add:hover:not(:disabled){border-color:var(--lime);color:var(--lime)}
+#message{font-size:11px;line-height:1.5;color:var(--muted);margin:12px 0 0;min-height:17px}
+.history-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.clear{border:0;background:transparent;color:var(--muted);font-size:11px;padding:4px}
+.clear:hover:not(:disabled){color:var(--white)}
+#history{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+#history li{display:flex;align-items:center;gap:9px;font-size:12px;overflow-wrap:anywhere}
+#history .empty{color:var(--muted);line-height:1.7;display:block}
+.history-index{margin-left:auto;color:var(--muted);font-size:10px;flex:none}
+.side-note{display:flex;gap:10px;padding:3px 9px;color:var(--muted);font-size:11px;line-height:1.7}
+.side-note span{color:var(--purple);font-size:18px}
+footer{display:flex;justify-content:space-between;gap:20px;color:#8c8d99;font-size:10px;letter-spacing:.4px;margin-top:28px}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:10;overflow:hidden}
+.confetti{position:absolute;width:8px;height:13px;top:-20px;animation:fall 2.4s ease-in forwards}
+@keyframes fall{to{transform:translate(var(--drift),105vh) rotate(var(--turn));opacity:0}}
+@media(max-width:900px){.shell{padding:24px}.layout{grid-template-columns:minmax(0,1fr) 310px;gap:18px}.arena{padding:22px 17px}.panel{padding:19px}.wheel-wrap{margin-top:32px}.intro{margin-top:32px}}
+@media(max-width:680px){.shell{padding:20px 16px}.header-note{font-size:10px}.layout{grid-template-columns:1fr}.intro{margin:29px 0 23px}h1{letter-spacing:-1.8px}.wheel-wrap{width:min(100%,340px)}.arena{padding:21px 20px}.side{gap:14px}.key-hint{display:none}.spin{margin-bottom:7px}.intro p{max-width:300px;font-size:13px}footer{line-height:1.6}.side-note{display:none}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.confetti{display:none}.spin{transition:none}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header><div class="brand"><span class="brand-icon" aria-hidden="true">✳</span>randomiser<span style="color:var(--lime)">.</span></div><div class="header-note"><span class="dot"></span> Big decisions. Zero effort.</div></header>
+<section class="intro"><div class="eyebrow">Let luck have the last word</div><h1>Less debate.<br>More <span>leave it to fate.</span></h1><p>Coin toss, food pick, who goes first. Put it on the wheel.</p></section>
+<main class="layout">
+<section class="arena" aria-label="Random choice wheel">
+<div class="arena-top"><span class="badge">THE DECISION MAKER</span><span class="odds" id="odds">50% chance each</span></div>
+<div class="wheel-wrap">
+<svg class="pointer" viewBox="0 0 30 40" aria-hidden="true"><path d="M3 1H27Q30 1 28 7L17 36Q15 41 13 36L2 7Q0 1 3 1Z" fill="#f5f2e5"/></svg>
+<div class="wheel-frame"><svg id="wheel" viewBox="0 0 400 400" role="img" aria-label="Wheel with Heads and Tails"></svg></div>
+<div class="hub" aria-hidden="true">✳</div>
+</div>
+<div class="result" role="status" aria-live="polite" aria-atomic="true"><span class="result-label" id="result-label">All set?</span><p id="result">Your fate awaits.</p></div>
+<button class="spin" id="spin" type="button">Spin the wheel <span aria-hidden="true">↗</span></button>
+<p class="key-hint">or press <kbd>Space</kbd> to let fate decide</p>
+</section>
+<aside class="side">
+<section class="panel" aria-labelledby="choices-title">
+<div class="panel-head"><h2 id="choices-title">On the wheel</h2><span class="counter" id="counter">2 / 20</span></div>
+<p class="help">Add your options. We'll handle the hard part.</p>
+<div class="presets"><button class="preset" id="coin" type="button">◐ Coin toss</button><button class="preset" id="yesno" type="button">↔ Yes / No</button></div>
+<div id="options"></div>
+<button class="add" id="add" type="button">＋ Add an option</button>
+<p id="message" role="status">1–20 options. Every slice gets an equal shot.</p>
+</section>
+<section class="panel" aria-labelledby="history-title">
+<div class="history-head"><h2 id="history-title">Recent spins</h2><button class="clear" id="clear" type="button" disabled>Clear</button></div>
+<ol id="history"><li class="empty">A clean slate. Give the wheel a spin.</li></ol>
+</section>
+<div class="side-note"><span aria-hidden="true">✧</span><div>For the tiny decisions that take way too long.<br>Made for you and your indecisive friends.</div></div>
+</aside>
+</main>
+<footer><span>GOOD FRIENDS. QUESTIONABLE CHOICES.</span><span>No accounts. Just chance.</span></footer>
+</div>
+<div id="confetti" aria-hidden="true"></div>
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const colors = ['#b8a3f4','#d5fa63','#ffa776','#81d4ce','#f394b4','#f8d777','#8fa9f0','#c3d69c','#db9de0','#92d3ec','#dcb996','#aca5e9','#c6eb7f','#f6a59b','#80c2b3','#e7ce9a','#a7bce8','#d8a4bf','#abd9a8','#e7b578'];
+const storageKey = 'randomiser-options-v1';
+let options = ['Heads','Tails'];
+try {
+  const saved = JSON.parse(localStorage.getItem(storageKey));
+  if (Array.isArray(saved) && saved.length >= 1 && saved.length <= 20 && saved.every(v => typeof v === 'string' && v.trim() && v.length <= 40)) options = saved;
+} catch (_) {}
+let rotation = 0, spinning = false, history = [], spinCount = 0;
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const svgNS = 'http://www.w3.org/2000/svg';
+function svgNode(tag, attrs) {
+  const node = document.createElementNS(svgNS, tag);
+  for (const [key,value] of Object.entries(attrs)) node.setAttribute(key, value);
+  return node;
+}
+function point(angle) {
+  const radians = (angle - 90) * Math.PI / 180;
+  return [200 + 198 * Math.cos(radians), 200 + 198 * Math.sin(radians)];
+}
+function drawWheel() {
+  const wheel = $('wheel');
+  wheel.replaceChildren();
+  wheel.setAttribute('aria-label', 'Wheel options: ' + options.map(v => v.trim() || 'Unnamed option').join(', '));
+  const step = 360 / options.length;
+  options.forEach((label, i) => {
+    const fill = colors[i];
+    if (options.length === 1) wheel.append(svgNode('circle',{cx:200,cy:200,r:198,fill}));
+    else {
+      const a = point(i * step), b = point((i + 1) * step);
+      wheel.append(svgNode('path',{d:'M200 200 L'+a.join(' ')+' A198 198 0 '+(step>180?1:0)+' 1 '+b.join(' ')+' Z',fill,stroke:'#191821','stroke-width':1.5}));
+    }
+    const angle = options.length === 1 ? 0 : (i + .5) * step;
+    const group = svgNode('g',{transform:'translate(200 200) rotate('+(angle-90)+')'});
+    const text = svgNode('text',{x:options.length>10?123:117,y:0,fill:'#20202a','font-size':options.length>12?11:options.length>7?13:19,'font-weight':750,'text-anchor':'middle','dominant-baseline':'middle'});
+    let name = label.trim() || 'Option ' + (i + 1);
+    const limit = options.length>7 ? 12 : 15;
+    if (Array.from(name).length > limit) name = Array.from(name).slice(0,limit-1).join('') + '…';
+    text.textContent = name;
+    // Keep labels readable on both halves of the wheel.
+    if (angle > 180) text.setAttribute('transform','rotate(180 '+(options.length>10?123:117)+' 0)');
+    group.append(text); wheel.append(group);
+  });
+  $('counter').textContent = options.length + ' / 20';
+  $('odds').textContent = (100/options.length).toLocaleString(undefined,{maximumFractionDigits:1}) + '% chance each';
+}
+function save() {
+  if (options.every(v => v.trim())) {
+    try { localStorage.setItem(storageKey, JSON.stringify(options)); } catch (_) {}
+  }
+}
+function updateControls() {
+  const blank = options.some(v => !v.trim());
+  $('spin').disabled = spinning || blank;
+  $('add').disabled = spinning || options.length >= 20;
+  $('coin').disabled = $('yesno').disabled = spinning;
+  $('clear').disabled = spinning || history.length === 0;
+  document.querySelectorAll('.option input').forEach(el => el.disabled = spinning);
+  document.querySelectorAll('.remove').forEach(el => el.disabled = spinning || options.length === 1);
+  $('message').textContent = blank ? 'Give every option a name to start spinning.' : options.length === 20 ? 'Wheel full! Edit or remove an option to make room.' : '1–20 options. Every slice gets an equal shot.';
+}
+function resetResult() {
+  $('result-label').textContent = 'All set?';
+  $('result').textContent = 'Your fate awaits.';
+}
+function renderOptions(focusIndex) {
+  $('options').replaceChildren();
+  options.forEach((value,i) => {
+    const row = document.createElement('div'); row.className = 'option';
+    const swatch = document.createElement('span'); swatch.className = 'swatch'; swatch.style.background = colors[i];
+    const input = document.createElement('input');
+    input.type = 'text'; input.value = value; input.maxLength = 40;
+    input.setAttribute('aria-label', 'Option ' + (i+1)); input.placeholder = 'Option ' + (i+1);
+    input.addEventListener('input', () => {options[i] = input.value; drawWheel(); updateControls(); resetResult(); save();});
+    const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'remove'; remove.textContent = '×';
+    remove.setAttribute('aria-label', 'Remove option ' + (i+1));
+    remove.addEventListener('click', () => {
+      if (spinning || options.length <= 1) return;
+      options.splice(i,1); renderOptions(Math.min(i,options.length-1)); resetResult(); save();
+    });
+    row.append(swatch,input,remove); $('options').append(row);
+  });
+  drawWheel(); updateControls();
+  if (focusIndex !== undefined) {
+    const input = $('options').children[focusIndex]?.querySelector('input');
+    input?.focus(); input?.select();
+  }
+}
+function preset(values) {
+  if (spinning) return;
+  options = values; rotation = 0; $('wheel').style.transform = 'rotate(0deg)';
+  renderOptions(); resetResult(); save();
+}
+$('coin').addEventListener('click', () => preset(['Heads','Tails']));
+$('yesno').addEventListener('click', () => preset(['Yes','No']));
+$('add').addEventListener('click', () => {
+  if (spinning || options.length >= 20) return;
+  options.push('Option ' + (options.length+1)); renderOptions(options.length-1); resetResult(); save();
+});
+function randomInt(max) {
+  const data = new Uint32Array(1), limit = Math.floor(4294967296/max)*max;
+  do { crypto.getRandomValues(data); } while (data[0] >= limit);
+  return data[0] % max;
+}
+function showHistory() {
+  $('history').replaceChildren();
+  if (!history.length) {
+    const empty = document.createElement('li'); empty.className='empty'; empty.textContent='A clean slate. Give the wheel a spin.'; $('history').append(empty);
+  }
+  history.forEach(item => {
+    const li=document.createElement('li'), dot=document.createElement('span'), label=document.createElement('span'), count=document.createElement('span');
+    dot.className='swatch'; dot.style.background=item.color; label.textContent=item.name;
+    count.className='history-index'; count.textContent='#'+item.number;
+    li.append(dot,label,count); $('history').append(li);
+  });
+  updateControls();
+}
+function celebrate() {
+  if (reducedMotion.matches) return;
+  $('confetti').replaceChildren();
+  for(let i=0;i<55;i++) {
+    const piece=document.createElement('i'); piece.className='confetti';
+    piece.style.cssText='left:'+randomInt(101)+'%;background:'+colors[i%colors.length]+';animation-delay:'+randomInt(350)+'ms;--drift:'+(randomInt(301)-150)+'px;--turn:'+randomInt(1080)+'deg';
+    $('confetti').append(piece);
+  }
+  setTimeout(() => $('confetti').replaceChildren(),3000);
+}
+function spin() {
+  if (spinning || options.some(v => !v.trim())) return;
+  spinning = true; updateControls();
+  $('spin').textContent = 'Leaving it to fate…';
+  $('result-label').textContent = 'Round ' + (spinCount+1);
+  $('result').textContent = 'Going around…';
+  const winner = randomInt(options.length), step = 360/options.length;
+  const jitter = ((randomInt(10001)/10000)-.5)*step*.6;
+  const landing = ((360 - (winner+.5)*step + jitter)%360+360)%360;
+  const start = rotation, travel = (landing-start+360)%360 + 360*(5+randomInt(3));
+  const duration = reducedMotion.matches ? 120 : 4200 + randomInt(600);
+  const started = performance.now();
+  function frame(now) {
+    const t = Math.min((now-started)/duration,1);
+    rotation = start + travel*(1-Math.pow(1-t,5));
+    $('wheel').style.transform = 'rotate('+rotation+'deg)';
+    if (t<1) requestAnimationFrame(frame);
+    else {
+      rotation = landing; $('wheel').style.transform = 'rotate('+rotation+'deg)';
+      spinning = false; spinCount++;
+      $('result-label').textContent = 'The wheel has spoken';
+      $('result').textContent = options[winner].trim();
+      $('spin').textContent = 'Spin again ↗';
+      history.unshift({name:options[winner].trim(),color:colors[winner],number:spinCount});
+      history = history.slice(0,5); showHistory(); celebrate();
+    }
+  }
+  requestAnimationFrame(frame);
+}
+$('spin').addEventListener('click',spin);
+$('clear').addEventListener('click', () => {history=[];showHistory();});
+document.addEventListener('keydown', event => {
+  if(event.code==='Space' && !event.repeat && !['INPUT','TEXTAREA','BUTTON','SELECT'].includes(event.target.tagName) && !event.target.isContentEditable) {
+    event.preventDefault(); spin();
+  }
+});
+renderOptions();
+})();
+</script>
+</body>
+</html>
